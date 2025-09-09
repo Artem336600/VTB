@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления вакансиями</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo" id="logoBtn">
+                    <span>VTB HR SYSTEM</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="settingsBtn">
+                        SETTINGS
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-card">
+                    <div class="welcome-icon">
+                        [UPLOAD]
+                    </div>
+                    <h1>Система управления вакансиями</h1>
+                    <p>Выберите действие: создать новый шаблон или открыть существующий</p>
+
+                    <div class="welcome-options">
+                        <button class="option-card" id="createTemplateBtn">
+                            <div class="option-icon"></div>
+                            <div class="option-title">Создать новый шаблон</div>
+                            <div class="option-desc">Загрузите файл и создайте новый шаблон вакансии</div>
+                        </button>
+
+                        <button class="option-card" id="chooseTemplateBtn">
+                            <div class="option-icon"></div>
+                            <div class="option-title">Выбрать существующий шаблон</div>
+                            <div class="option-desc">Откройте ранее сохранённые шаблоны и продолжите работу</div>
+                        </button>
+
+                        <button class="option-card" id="viewActiveVacanciesBtn">
+                            <div class="option-icon"></div>
+                            <div class="option-title">Действующие вакансии</div>
+                            <div class="option-desc">Просмотр и управление активными вакансиями в системе</div>
+                        </button>
+
+                        <button class="option-card" id="uploadResumesBtn">
+                            <div class="option-icon">📄</div>
+                            <div class="option-title">Загрузить резюме кандидатов</div>
+                            <div class="option-desc">Загрузите резюме кандидатов для анализа и сопоставления с вакансиями</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Steps -->
+            <div class="process-container" id="processContainer" style="display: none;">
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="step active" data-step="1">
+                            <div class="step-number">1</div>
+                        </div>
+                        <div class="step" data-step="2">
+                            <div class="step-number">2</div>
+                        </div>
+                        <div class="step" data-step="3">
+                            <div class="step-number">3</div>
+                        </div>
+                        <div class="step" data-step="4">
+                            <div class="step-number">4</div>
+                        </div>
+                        <div class="step" data-step="5">
+                            <div class="step-number">5</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Content -->
+                <div class="step-content">
+                    <!-- Step 1: File Upload -->
+                    <div class="step-panel active" id="step1">
+                        <div class="step-header">
+                            <h2>Загрузка файла</h2>
+                            <p>Выберите документ с описанием вакансии</p>
+                        </div>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <div>[UPLOAD]</div>
+                                <h3>Перетащите файл сюда или нажмите для выбора</h3>
+                                <p>Поддерживаемые форматы: PDF, DOC, DOCX, TXT</p>
+                                <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <div class="file-card">
+                                <div class="file-icon">
+                                    [FILE]
+                                </div>
+                                <div class="file-details">
+                                    <h4 id="fileName"></h4>
+                                    <p id="fileSize"></p>
+                                    <p id="fileType"></p>
+                                </div>
+                                <div class="file-actions">
+                                    <button class="btn-danger" id="removeFileBtn">
+                                        [X]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button class="btn-primary" id="nextStep1Btn" disabled>
+                                Далее
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Text Extraction -->
+                    <div class="step-panel" id="step2">
+                        <div class="step-header">
+                            <h2>Извлечение текста</h2>
+                            <p>Обработка документа и извлечение текстового содержимого</p>
+                        </div>
+
+                        <div class="processing-area">
+                            <div class="processing-animation">
+                                <div class="spinner"></div>
+                                <p>Извлекаем текст из документа...</p>
+                            </div>
+                        </div>
+
+                        <div class="extraction-result" id="extractionResult" style="display: none;">
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div>[OK]</div>
+                                    <h3>Текст успешно извлечен</h3>
+                                </div>
+                                <div class="result-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Страниц:</span>
+                                        <span class="stat-value" id="pagesCount">-</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Секций:</span>
+                                        <span class="stat-value" id="sectionsCount">-</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Символов:</span>
+                                        <span class="stat-value" id="charCount">-</span>
+                                    </div>
+                                </div>
+                                <div class="text-preview">
+                                    <h4>Предварительный просмотр:</h4>
+                                    <div class="preview-content" id="textPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button class="btn-secondary" id="prevStep2Btn">
+                                Назад
+                            </button>
+                            <button class="btn-primary" id="nextStep2Btn" disabled>
+                                Далее
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: AI Structuring -->
+                    <div class="step-panel" id="step3">
+                        <div class="step-header">
+                            <h2>Структурирование ИИ</h2>
+                            <p>Анализ текста с помощью искусственного интеллекта</p>
+                        </div>
+
+                        <div class="processing-area">
+                            <div class="processing-animation">
+                                <div class="spinner"></div>
+                                <p>Анализируем структуру вакансии...</p>
+                            </div>
+                        </div>
+
+                        <div class="ai-result" id="aiResult" style="display: none;">
+                            <div class="structured-data">
+                                <div class="data-header">
+                                    <h3>Структурированные данные</h3>
+                                </div>
+                                
+                                <!-- Add Field Form -->
+                                <div class="add-field-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="quickFieldCategory">Блок:</label>
+                                            <div class="category-input-container">
+                                                <select id="quickFieldCategory" class="form-input">
+                                                    <option value="job_info">Информация о вакансии</option>
+                                                    <option value="salary">Зарплата</option>
+                                                    <option value="requirements">Требования</option>
+                                                    <option value="company_info">Информация о компании</option>
+                                                    <option value="contact_info">Контактная информация</option>
+                                                    <option value="additional_info">Дополнительная информация</option>
+                                                    <option value="responsibilities">Обязанности</option>
+                                                    <option value="benefits">Преимущества</option>
+                                                    <option value="custom">+ Создать новый блок</option>
+                                                </select>
+                                                <input type="text" id="customBlockName" class="form-input" placeholder="Введите название нового блока" style="display: none;">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="quickFieldName">Название поля:</label>
+                                            <input type="text" id="quickFieldName" class="form-input" placeholder="Введите название поля">
+                                            <div class="field-suggestions" id="quickFieldSuggestions"></div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="quickFieldValue">Значение:</label>
+                                            <input type="text" id="quickFieldValue" class="form-input" placeholder="Введите значение">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <button class="btn-add" id="quickAddFieldBtn">+ Добавить</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="data-sections" id="dataSections">
+                                    <div class="data-section">
+                                        <h3>ИНФОРМАЦИЯ О ВАКАНСИИ</h3>
+                                        <div class="data-grid" id="jobInfoGrid"></div>
+                                    </div>
+                                    
+                                    <div class="data-section">
+                                        <h3>ЗАРПЛАТА</h3>
+                                        <div class="data-grid" id="salaryGrid"></div>
+                                    </div>
+                                    
+                                    <div class="data-section">
+                                        <h3>ТРЕБОВАНИЯ</h3>
+                                        <div class="data-grid" id="requirementsGrid"></div>
+                                    </div>
+                                    
+                                    <div class="data-section">
+                                        <h3>ОБЯЗАННОСТИ</h3>
+                                        <div class="responsibilities-list" id="responsibilitiesList"></div>
+                                    </div>
+                                    
+                                    <div class="data-section">
+                                        <h3>ПРЕИМУЩЕСТВА</h3>
+                                        <div class="benefits-list" id="benefitsList"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button class="btn-secondary" id="prevStep3Btn">
+                                Назад
+                            </button>
+                            <button class="btn-primary" id="nextStep3Btn" disabled>
+                                Далее
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Skills Scoring -->
+                    <div class="step-panel" id="step4">
+                        <div class="step-header">
+                            <h2>Распределение баллов по навыкам</h2>
+                            <p>Настройте баллы для каждого навыка. Общая сумма должна составлять 200 баллов.</p>
+                        </div>
+
+                        <div class="skills-scoring">
+                            <div class="scoring-section">
+                                <h3>Технические навыки</h3>
+                                <div class="skills-list" id="technicalSkillsScoring"></div>
+                            </div>
+                            
+                            <div class="scoring-section">
+                                <h3>Языки программирования</h3>
+                                <div class="skills-list" id="programmingSkillsScoring"></div>
+                            </div>
+                            
+                            <div class="scoring-section">
+                                <h3>Инструменты</h3>
+                                <div class="skills-list" id="toolsScoring"></div>
+                            </div>
+                            
+                            <div class="total-score-display">
+                                <div class="score-summary">
+                                    <span>Общая сумма: </span>
+                                    <span id="totalScoreValue">0</span>
+                                    <span>/200 баллов</span>
+                                </div>
+                                <div class="score-bar">
+                                    <div class="score-fill" id="totalScoreFill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button class="btn-secondary" id="prevStep4Btn">Назад</button>
+                            <button class="btn-primary" id="nextStep4Btn">Далее</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Save -->
+                    <div class="step-panel" id="step5">
+                        <div class="step-header">
+                            <h2>Сохранение вакансии</h2>
+                            <p>Добавление дополнительной информации и сохранение в базу данных</p>
+                        </div>
+
+                        <div class="save-form">
+                            <div class="form-section">
+                                <h3>Дополнительная информация</h3>
+                                
+                                <div class="form-group">
+                                    <label for="applicationDeadline">Дата окончания набора:</label>
+                                    <input type="date" id="applicationDeadline" class="form-input" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="positionsCount">Количество позиций:</label>
+                                    <input type="number" id="positionsCount" class="form-input" min="1" max="1000" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="region">Регион:</label>
+                                    <input type="text" id="region" class="form-input" placeholder="Например: Москва">
+                                </div>
+                            </div>
+
+                            <div class="summary-section">
+                                <h3>Сводка вакансии</h3>
+                                <div class="summary-card" id="vacancySummary"></div>
+                            </div>
+                        </div>
+
+                        <div class="processing-area" id="saveProcessing" style="display: none;">
+                            <div class="processing-animation">
+                                <div class="spinner"></div>
+                                <p>Сохраняем вакансию в базу данных...</p>
+                            </div>
+                        </div>
+
+
+                        <div class="step-actions">
+                            <button class="btn-secondary" id="prevStep5Btn">
+                                Назад
+                            </button>
+                            <button class="btn-primary" id="saveVacancyBtn">
+                                Сохранить вакансию
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Vacancies -->
+            <div class="existing-vacancies" id="existingVacancies" style="display: none;">
+                <div class="vacancies-header">
+                    <h2>Существующие вакансии</h2>
+                    <button class="btn-secondary" id="backToWelcomeBtn">
+                        Назад
+                    </button>
+                </div>
+                
+                <div class="vacancies-list" id="vacanciesList">
+                    <!-- Vacancies will be loaded here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner large"></div>
+                <p id="loadingText">Обработка...</p>
+            </div>
+        </div>
+
+        <!-- Error Modal -->
+        <div class="modal" id="errorModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Ошибка</h3>
+                    <button class="modal-close" id="errorModalClose">
+                        [X]
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="errorModalOk">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Field Modal -->
+        <div class="modal" id="addFieldModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Добавить новое поле</h3>
+                    <button class="modal-close" id="addFieldModalClose">
+                        [X]
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="fieldCategory">Выберите блок:</label>
+                        <select id="fieldCategory" class="form-input">
+                            <option value="job_info">Информация о вакансии</option>
+                            <option value="salary">Зарплата</option>
+                            <option value="requirements">Требования</option>
+                            <option value="company_info">Информация о компании</option>
+                            <option value="contact_info">Контактная информация</option>
+                            <option value="additional_info">Дополнительная информация</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fieldName">Название поля:</label>
+                        <input type="text" id="fieldName" class="form-input" placeholder="Введите название поля">
+                        <div class="field-suggestions" id="fieldSuggestions"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fieldValue">Значение:</label>
+                        <textarea id="fieldValue" class="form-input" rows="3" placeholder="Введите значение поля"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="addFieldModalCancel">Отмена</button>
+                    <button class="btn-primary" id="addFieldModalAdd">Добавить поле</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

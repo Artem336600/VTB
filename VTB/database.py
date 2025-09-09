@@ -3,6 +3,7 @@
 
 import sqlite3
 import os
+import json
 from datetime import datetime
 import base64
 
@@ -81,6 +82,21 @@ class TemplateDatabase:
         except sqlite3.OperationalError:
             pass  # Поле уже существует
         
+        try:
+            cursor.execute('ALTER TABLE templates ADD COLUMN structured_data TEXT')
+        except sqlite3.OperationalError:
+            pass  # Поле уже существует
+        
+        try:
+            cursor.execute('ALTER TABLE templates ADD COLUMN skill_scores TEXT')
+        except sqlite3.OperationalError:
+            pass  # Поле уже существует
+        
+        try:
+            cursor.execute('ALTER TABLE templates ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        except sqlite3.OperationalError:
+            pass  # Поле уже существует
+        
         conn.commit()
         conn.close()
     
@@ -116,7 +132,7 @@ class TemplateDatabase:
     def add_vacancy(self, name, content=None, file_type="txt", file_path=None, pdf_path=None,
                    job_title=None, job_description=None, application_deadline=None, 
                    positions_count=None, region=None, salary_min=None, salary_max=None,
-                   job_zone=None, job_code=None):
+                   job_zone=None, job_code=None, structured_data=None, skill_scores=None):
         """Добавляет вакансию в базу данных с полной информацией"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -133,25 +149,104 @@ class TemplateDatabase:
             pdf_size = os.path.getsize(pdf_path)
             is_converted = 1
         
+        # Преобразуем structured_data и skill_scores в JSON строки
+        structured_data_json = json.dumps(structured_data) if structured_data else None
+        skill_scores_json = json.dumps(skill_scores) if skill_scores else None
+        
         cursor.execute('''
             INSERT INTO templates (
                 name, content, file_type, file_path, file_size, 
                 pdf_path, pdf_size, is_converted,
                 job_title, job_description, application_deadline, 
                 positions_count, region, salary_min, salary_max,
-                job_zone, job_code
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                job_zone, job_code, structured_data, skill_scores
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             name, content, file_type, file_path, file_size,
             pdf_path, pdf_size, is_converted,
             job_title, job_description, application_deadline,
             positions_count, region, salary_min, salary_max,
-            job_zone, job_code
+            job_zone, job_code, structured_data_json, skill_scores_json
         ))
         
         conn.commit()
         conn.close()
         return cursor.lastrowid
+    
+    def delete_template(self, template_id):
+        """Удаляет шаблон из базы данных"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Проверяем, существует ли шаблон
+        cursor.execute('SELECT id FROM templates WHERE id = ?', (template_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return False
+        
+        # Удаляем шаблон
+        cursor.execute('DELETE FROM templates WHERE id = ?', (template_id,))
+        conn.commit()
+        conn.close()
+        
+        return True
+    
+    def update_vacancy_data(self, template_id, structured_data=None, skill_scores=None):
+        """Обновляет structured_data и skill_scores шаблона"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Проверяем, существует ли шаблон
+        cursor.execute('SELECT id FROM templates WHERE id = ?', (template_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return False
+        
+        # Преобразуем данные в JSON строки
+        structured_data_json = json.dumps(structured_data) if structured_data else None
+        skill_scores_json = json.dumps(skill_scores) if skill_scores else None
+        
+        # Обновляем данные
+        cursor.execute('''
+            UPDATE templates 
+            SET structured_data = ?, skill_scores = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (structured_data_json, skill_scores_json, template_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return True
+    
+    def update_vacancy_full(self, template_id, job_title=None, positions_count=None, region=None, 
+                           application_deadline=None, structured_data=None, skill_scores=None):
+        """Обновляет все поля вакансии"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Проверяем, существует ли шаблон
+        cursor.execute('SELECT id FROM templates WHERE id = ?', (template_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return False
+        
+        # Преобразуем данные в JSON строки
+        structured_data_json = json.dumps(structured_data) if structured_data else None
+        skill_scores_json = json.dumps(skill_scores) if skill_scores else None
+        
+        # Обновляем все поля
+        cursor.execute('''
+            UPDATE templates 
+            SET job_title = ?, positions_count = ?, region = ?, application_deadline = ?,
+                structured_data = ?, skill_scores = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (job_title, positions_count, region, application_deadline, 
+              structured_data_json, skill_scores_json, template_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return True
     
     def get_all_templates(self):
         """Получает все шаблоны из базы данных"""
@@ -159,7 +254,9 @@ class TemplateDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, name, content, file_type, file_path, file_size, pdf_path, pdf_size, is_converted, created_at
+            SELECT id, name, content, file_type, file_path, file_size, pdf_path, pdf_size, is_converted, created_at,
+                   job_title, job_description, application_deadline, positions_count, region, 
+                   salary_min, salary_max, job_zone, job_code, structured_data, skill_scores
             FROM templates
             ORDER BY created_at DESC
         ''')
@@ -175,7 +272,9 @@ class TemplateDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, name, content, file_type, file_path, file_size, pdf_path, pdf_size, is_converted, created_at
+            SELECT id, name, content, file_type, file_path, file_size, pdf_path, pdf_size, is_converted, created_at,
+                   job_title, job_description, application_deadline, positions_count, region, 
+                   salary_min, salary_max, job_zone, job_code, structured_data, skill_scores
             FROM templates
             WHERE id = ?
         ''', (template_id,))

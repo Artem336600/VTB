@@ -77,12 +77,19 @@ class PDFConverter:
             ]
             
             # Выполняем конвертацию
+            print(f"Running LibreOffice command: {' '.join(cmd)}")
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=60  # Таймаут 60 секунд
             )
+            
+            print(f"LibreOffice return code: {result.returncode}")
+            if result.stdout:
+                print(f"LibreOffice stdout: {result.stdout}")
+            if result.stderr:
+                print(f"LibreOffice stderr: {result.stderr}")
             
             if result.returncode != 0:
                 print(f"Ошибка конвертации: {result.stderr}")
@@ -139,7 +146,12 @@ class PDFConverter:
         if not file_path:
             return False
         
-        file_ext = os.path.splitext(file_path)[1].lower()[1:]  # Убираем точку
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if not file_ext:
+            return False
+        
+        # Убираем точку и проверяем
+        file_ext = file_ext[1:]  # Убираем точку
         return file_ext in self.get_supported_formats()
 
 def test_converter():
