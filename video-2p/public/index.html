@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Бот-интервьюер VTB</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .video-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .video-container {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      height: 300px;
+    }
+
+    .video-wrapper {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid #2a2a2a;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #localVideo {
+      transform: scaleX(-1);
+    }
+
+    .video-label {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .chat-container {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .ai-avatar {
+      width: 44px;
+      height: 44px;
+      background: #2a2a2a;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border: 1px solid #3a3a3a;
+    }
+
+    .ai-info h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+
+    .ai-status {
+      font-size: 12px;
+      color: #888888;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 0;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      margin: 15px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      border: 1px solid #3a3a3a;
+    }
+
+    .message.user .message-avatar {
+      background: #2a2a2a;
+    }
+
+    .message.bot .message-avatar {
+      background: #2a2a2a;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: #2a2a2a;
+      color: #ffffff;
+      border: 1px solid #3a3a3a;
+    }
+
+    .message.bot .message-content {
+      background: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #2a2a2a;
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: #666666;
+      margin-top: 6px;
+    }
+
+    .chat-input-container {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input:focus {
+      border-color: #3a3a3a;
+    }
+
+    .chat-input::placeholder {
+      color: #666666;
+    }
+
+    .send-button {
+      width: 48px;
+      height: 48px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 12px;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .send-button:hover {
+      background: #3a3a3a;
+      border-color: #4a4a4a;
+    }
+
+    .send-button:active {
+      background: #1a1a1a;
+    }
+
+    .voice-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 12px 16px;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      transition: all 0.2s ease;
+      max-width: 300px;
+    }
+
+    .voice-indicator.listening {
+      background: #1a2a1a;
+      border-color: #2a4a2a;
+      color: #4ade80;
+    }
+
+    .voice-indicator.error {
+      background: #2a1a1a;
+      border-color: #4a2a2a;
+      color: #f87171;
+    }
+
+    .voice-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666666;
+      flex-shrink: 0;
+    }
+
+    .voice-indicator.listening .voice-dot {
+      background: #4ade80;
+    }
+
+    .voice-indicator.error .voice-dot {
+      background: #f87171;
+    }
+
+    .transcription-text {
+      color: #888888;
+      font-style: italic;
+      margin-left: 8px;
+      word-break: break-word;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #667eea;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+      opacity: 0.7;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #667eea;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Стили для скроллбара */
+    .messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease;
+    }
+
+    .welcome-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .welcome-content {
+      text-align: center;
+      max-width: 500px;
+      padding: 40px;
+      background: #1a1a1a;
+      border-radius: 16px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .welcome-title {
+      font-size: 36px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+
+    .welcome-subtitle {
+      font-size: 16px;
+      color: #888888;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .connect-button {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 12px;
+      padding: 16px 32px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .connect-button:hover {
+      background: #3a3a3a;
+      border-color: #4a4a4a;
+    }
+
+    .connect-button:active {
+      background: #1a1a1a;
+    }
+
+    .connect-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <!-- Экран приветствия -->
+  <div id="welcomeScreen" class="welcome-screen">
+    <div class="welcome-content">
+      <h1 class="welcome-title">Бот-интервьюер VTB</h1>
+      <p class="welcome-subtitle">
+        Добро пожаловать на собеседование! Я бот-интервьюер VTB.<br>
+        Мы проведем структурированное интервью по стандартной схеме.
+      </p>
+      <button id="connectButton" class="connect-button">
+        Начать интервью
+      </button>
+    </div>
+  </div>
+
+  <!-- Основной интерфейс -->
+  <div id="mainInterface" class="container" style="display: none;">
+    <!-- Секция видео -->
+    <div class="video-section">
+      <div class="video-container">
+        <div class="video-grid">
+          <div class="video-wrapper">
+            <video id="localVideo" autoplay muted></video>
+            <div class="video-label">Вы</div>
+          </div>
+          <div class="video-wrapper">
+            <video id="remoteVideo" autoplay></video>
+            <div class="video-label">ИИ-Собеседник</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Секция чата -->
+    <div class="chat-section">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="ai-avatar">🤖</div>
+          <div class="ai-info">
+            <h3>Бот-интервьюер VTB</h3>
+            <div class="ai-status">
+              <div class="status-dot"></div>
+              <span>Готов к интервью</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="messages" class="messages"></div>
+
+        <div class="chat-input-container">
+          <input 
+            id="chatInput" 
+            class="chat-input" 
+            type="text" 
+            placeholder="Отвечайте на вопросы интервью или говорите в микрофон..."
+            autocomplete="off"
+          >
+          <button id="sendButton" class="send-button">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Индикатор голоса -->
+  <div id="voiceIndicator" class="voice-indicator" style="display: none;">
+    <div class="voice-dot"></div>
+    <span id="voiceStatus">Микрофон активен</span>
+    <span id="transcriptionText" class="transcription-text"></span>
+  </div>
+
+  <script>
+    // Глобальные переменные
+    let ws = null;
+    let localStream = null;
+    let roomId = null;
+    let isConnected = false;
+    let isTTSEnabled = true;
+    let currentUtterance = null;
+    let recognition = null;
+    let silenceTimer = null;
+    let isListening = false;
+
+    // Элементы DOM
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const mainInterface = document.getElementById('mainInterface');
+    const connectButton = document.getElementById('connectButton');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const messages = document.getElementById('messages');
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const voiceIndicator = document.getElementById('voiceIndicator');
+    const voiceStatus = document.getElementById('voiceStatus');
+    const transcriptionText = document.getElementById('transcriptionText');
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('🚀 Инициализация приложения...');
+      
+      // Получаем параметры кандидата из URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const candidateInfo = {
+        resume_id: urlParams.get('resume_id'),
+        vacancy_id: urlParams.get('vacancy_id'),
+        candidate: urlParams.get('candidate'),
+        score: urlParams.get('score')
+      };
+      
+      console.log('👤 Информация о кандидате:', candidateInfo);
+      
+      // Если есть параметры кандидата, автоматически запускаем интервью
+      if (candidateInfo.resume_id || candidateInfo.candidate) {
+        console.log('🎯 Автоматический запуск интервью...');
+        await startInterviewMode(candidateInfo);
+      } else {
+        // Показываем экран приветствия для обычного режима
+        welcomeScreen.style.display = 'flex';
+        mainInterface.style.display = 'none';
+      }
+      
+      // Настраиваем обработчики событий
+      setupEventListeners();
+      
+      // Инициализируем распознавание речи
+      initSpeechRecognition();
+    });
+
+    // Настройка обработчиков событий
+    function setupEventListeners() {
+      connectButton.onclick = handleConnect;
+      sendButton.onclick = sendMessage;
+      chatInput.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      };
+    }
+
+    // Автоматический запуск интервью
+    async function startInterviewMode(candidateInfo) {
+      try {
+        // Получаем доступ к медиа
+        await ensureMedia();
+        
+        // Создаем комнату
+        roomId = generateRoomId();
+        console.log(`🏠 Создана комната для интервью: ${roomId}`);
+        
+        // Подключаемся к WebSocket
+        connectWS();
+        
+        // Запускаем бота-интервьюера
+        await startInterviewBot(candidateInfo);
+        
+        // Скрываем экран приветствия и показываем основной интерфейс
+        setTimeout(() => {
+          welcomeScreen.classList.add('hidden');
+          mainInterface.style.display = 'flex';
+          
+          // Обновляем заголовок для интервью
+          document.querySelector('.ai-info h3').textContent = 'Бот-интервьюер VTB';
+          document.querySelector('.video-label').textContent = 'Кандидат';
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Ошибка запуска интервью:', error);
+        // Показываем экран приветствия в случае ошибки
+        welcomeScreen.style.display = 'flex';
+        mainInterface.style.display = 'none';
+      }
+    }
+
+    // Обработка подключения
+    async function handleConnect() {
+      connectButton.disabled = true;
+      connectButton.textContent = 'Подключение...';
+      
+      try {
+        // Получаем доступ к медиа
+        await ensureMedia();
+        
+        // Создаем комнату
+        roomId = generateRoomId();
+        console.log(`🏠 Создана комната: ${roomId}`);
+        
+        // Подключаемся к WebSocket
+        connectWS();
+        
+        // Запускаем ИИ-бота
+        await startAIBot();
+        
+        // Скрываем экран приветствия и показываем основной интерфейс
+        setTimeout(() => {
+          welcomeScreen.classList.add('hidden');
+          mainInterface.style.display = 'flex';
+          
+          // Добавляем приветственное сообщение
+          addMessage('bot', 'Привет! Рад познакомиться! 😊 Как дела?');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Ошибка подключения:', error);
+        connectButton.disabled = false;
+        connectButton.textContent = 'Попробовать снова';
+      }
+    }
+
+    // Генерация ID комнаты
+    function generateRoomId() {
+      return Math.random().toString(36).slice(2, 9);
+    }
+
+    // Получение доступа к медиа
+    async function ensureMedia() {
+      if (!localStream) {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        localVideo.srcObject = localStream;
+        console.log('📹 Доступ к камере и микрофону получен');
+      }
+    }
+
+    // Подключение к WebSocket
+    function connectWS() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}`);
+      
+      ws.onopen = () => {
+        console.log('🔌 WebSocket подключен');
+        isConnected = true;
+        
+        // Присоединяемся к комнате
+        ws.send(JSON.stringify({
+          type: 'join',
+          room: roomId,
+          name: 'Пользователь'
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+      };
+
+      ws.onclose = () => {
+        console.log('🔌 WebSocket отключен');
+        isConnected = false;
+      };
+
+      ws.onerror = (error) => {
+        console.error('❌ Ошибка WebSocket:', error);
+      };
+    }
+
+    // Обработка сообщений WebSocket
+    function handleWebSocketMessage(data) {
+      console.log('📨 Получено сообщение:', data);
+      
+      switch (data.type) {
+        case 'waiting':
+          console.log('⏳ Ожидание подключения...');
+          break;
+          
+        case 'initiate':
+          console.log('🚀 Инициируем соединение...');
+          break;
+          
+        case 'peer-joined':
+          console.log('👤 Собеседник присоединился');
+          break;
+          
+        case 'chat':
+          if (data.bot) {
+            addMessage('bot', data.text);
+            if (isTTSEnabled) {
+              speakText(data.text);
+            }
+          }
+          break;
+          
+        case 'offer':
+        case 'answer':
+        case 'candidate':
+          // Обработка WebRTC сигналов (заглушка)
+          break;
+      }
+    }
+
+    // Запуск ИИ-бота
+    async function startAIBot() {
+      try {
+        const response = await fetch('/start-ai-bot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId })
+        });
+        
+        const data = await response.json();
+        console.log('🤖 ИИ-бот запущен:', data);
+      } catch (error) {
+        console.error('❌ Ошибка запуска ИИ-бота:', error);
+      }
+    }
+
+    // Запуск бота-интервьюера
+    async function startInterviewBot(candidateInfo) {
+      try {
+        const response = await fetch('/start-interview-bot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            roomId: roomId,
+            candidateInfo: candidateInfo
+          })
+        });
+        
+        const data = await response.json();
+        console.log('🎯 Бот-интервьюер запущен:', data);
+      } catch (error) {
+        console.error('❌ Ошибка запуска бота-интервьюера:', error);
+      }
+    }
+
+    // Отправка сообщения
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text || !isConnected) return;
+      
+      // Добавляем сообщение в чат
+      addMessage('user', text);
+      
+      // Отправляем через WebSocket
+      ws.send(JSON.stringify({
+        type: 'chat',
+        text: text,
+        name: 'Пользователь'
+      }));
+      
+      // Очищаем поле ввода
+      chatInput.value = '';
+    }
+
+    // Добавление сообщения в чат
+    function addMessage(sender, text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = sender === 'user' ? '👤' : '🤖';
+      
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      content.textContent = text;
+      
+      const time = document.createElement('div');
+      time.className = 'message-time';
+      time.textContent = new Date().toLocaleTimeString();
+      
+      content.appendChild(time);
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(content);
+      
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Инициализация распознавания речи
+    function initSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window)) {
+        console.warn('⚠️ Распознавание речи не поддерживается');
+        return;
+      }
+
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'ru-RU';
+
+      recognition.onstart = () => {
+        console.log('🎤 Распознавание речи запущено');
+        isListening = true;
+        showVoiceIndicator('listening', 'Слушаю...');
+      };
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        // Показываем промежуточную транскрипцию
+        if (interimTranscript) {
+          transcriptionText.textContent = interimTranscript;
+          showVoiceIndicator('listening', 'Слушаю...');
+        }
+
+        if (finalTranscript) {
+          console.log('🎤 Распознано:', finalTranscript);
+          chatInput.value = finalTranscript;
+          transcriptionText.textContent = finalTranscript;
+          
+          // Автоматически отправляем сообщение через 2 секунды
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            if (chatInput.value.trim()) {
+              sendMessage();
+              transcriptionText.textContent = '';
+            }
+          }, 2000);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('❌ Ошибка распознавания речи:', event.error);
+        showVoiceIndicator('error', 'Ошибка микрофона');
+        isListening = false;
+      };
+
+      recognition.onend = () => {
+        console.log('🎤 Распознавание речи остановлено');
+        isListening = false;
+        transcriptionText.textContent = '';
+        showVoiceIndicator('', 'Микрофон активен');
+        
+        // Автоматически перезапускаем, если не было ошибки
+        if (!recognition.error) {
+          setTimeout(() => {
+            if (isConnected) {
+              recognition.start();
+            }
+          }, 100);
+        }
+      };
+
+      // Автоматически запускаем распознавание
+      setTimeout(() => {
+        if (isConnected) {
+          recognition.start();
+        }
+      }, 2000);
+    }
+
+    // Показ индикатора голоса
+    function showVoiceIndicator(type, text) {
+      voiceIndicator.className = `voice-indicator ${type}`;
+      voiceStatus.textContent = text;
+      voiceIndicator.style.display = 'flex';
+      
+      if (type === '') {
+        setTimeout(() => {
+          voiceIndicator.style.display = 'none';
+        }, 1000);
+      }
+    }
+
+    // Функция синтеза речи через Cartesia TTS
+    async function speakText(text) {
+      console.log('🔊 Озвучиваем:', text);
+      
+      try {
+        const response = await fetch('/synthesize-speech', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, language: 'ru' })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.success && data.audio) {
+            const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+            await audio.play();
+            console.log('✅ Озвучка завершена');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Ошибка озвучки:', error);
+      }
+    }
+  </script>
+</body>
+</html>

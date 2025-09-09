@@ -1,0 +1,23 @@
+{
+  "name": "video-2p",
+  "version": "1.0.0",
+  "description": "Простое приложение для видеозвонков на двоих",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "bot": "node bot.js",
+    "ai-bot": "node ai-chat-bot.js"
+  },
+  "keywords": ["video", "chat", "webrtc", "websocket"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
